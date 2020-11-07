@@ -1,0 +1,52 @@
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(reshape2)
+
+#read in experimental infection data 
+d= read_xlsx(path="HAAM ExpInf.xlsx")
+
+#remove empty rows
+d= subset(d, select = -c(15,16))
+
+#replace NAs in control group with 0s 
+d.control= d[16:20,]
+d.control[is.na(d.control)] = 0
+
+#subset infected groups
+d.infect= d[1:15,]
+d.infect[is.na(d.infect)] = 0
+
+#calculate mean parasitemia in infected groups
+dm= colMeans(d.infect[,2:12])
+mean(dm)
+
+#merge control and infected groups 
+d2= merge(d[1:15,], d.control,  all=TRUE)
+
+#replace NAs in columns with mean  
+d2[is.na(d2)] = 8.52
+
+#convert percentages to decimals 
+p2d= function(x){
+  y= x/100
+  return(y)
+}
+ 
+d3= lapply(d2[,2:12], 
+      function(x) {  
+        if (typeof(x) == 'double'){  
+          p2d(x) 
+        } else { }
+      }  
+)  
+
+d3= as.data.frame(d3)
+
+#add Bird ID column to new dataset 
+d3= cbind(d2$`Bird ID`, d3)
+
+#melt dataframes to make plotting easier 
+d3= melt(d3)
+d2.m= melt(d2)
+
